@@ -11,7 +11,7 @@ def main():
     posts, comments, users, badges = loadDataAndPrintNumRows(sc)
 
     # Task 2
-    task2(sc, posts, comments, users, badges)
+    task2(posts, comments)
 
 
 if __name__ == "__main__":
