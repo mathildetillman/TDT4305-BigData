@@ -59,23 +59,14 @@ def task2(posts, comments, users):
     print(f"The first question was asked by {userFirst.first()[1]} on {firstQuestion[0]}")
     print(f"The last question was asked by {userLast.first()[1]} on {lastQuestion[0]}")
 
-
-
-
-
     # 2.3
     # Find the users who wrote the greatest number of answers and questions
-    
+    print("Task 2.3") 
     print(f"User with most questions: {greatestNumberofQuestionsAndAnswers(posts, '1')[0]} with {greatestNumberofQuestionsAndAnswers(posts, '1')[1]} questions")
     print(f"User with most answers: {greatestNumberofQuestionsAndAnswers(posts, '2')[0]} with {greatestNumberofQuestionsAndAnswers(posts, '2')[1]} answers")
 
 def greatestNumberofQuestionsAndAnswers(rdd, type):
     
-    # Remove headers
-    rdd = rdd.mapPartitionsWithIndex(
-        lambda idx, it: islice(it, 1, None) if idx == 0 else it
-    )
-
     # Filter out posts by community
     posts = rdd.filter(lambda line: line[6] != -1)
 
@@ -87,12 +78,8 @@ def greatestNumberofQuestionsAndAnswers(rdd, type):
     # Create tuple of ownerId and 0    
     ownerIds = ownerIds.map(lambda x: (x[6], 0))
 
-    # Count by ownerId and sort the list
-    filteredPostsPerUser = sorted(ownerIds.countByKey().items(), key=takeSecond)
+    # Count by ownerId and sort the list by amount
+    filteredPostsPerUser = sorted(ownerIds.countByKey().items(), key=lambda x: x[1])
 
     # Return the last value as that is the one with the most posts
     return filteredPostsPerUser[-1]
-
-
-def takeSecond(tuple):
-    return tuple[1]
