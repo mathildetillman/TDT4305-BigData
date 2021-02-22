@@ -13,6 +13,7 @@ def loadDataAndPrintNumRows(sc):
 
     # 1.5
     # Print number of rows in each RDD
+    print("Task 1")
     print(f"Number of rows in posts: {posts.count()}")
     print(f"Number of rows in comments: {comments.count()}")
     print(f"Number of rows in users: {users.count()}")
