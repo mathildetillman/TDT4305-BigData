@@ -16,8 +16,42 @@ def getAverageLength(rdd, col):
     # Find average length
     return (rdd.reduce(lambda a, b: a + b)) / numRows
 
+def greatestNumberofQuestionsAndAnswers(rdd, type):
+    
+    # Filter out posts by community
+    posts = rdd.filter(lambda line: line[6] != -1)
+
+    # Only take questions or answers
+    filteredPosts = posts.filter(lambda x: x[1] == type)
+
+    # Filter out posts where the ownerId is null
+    ownerIds = filteredPosts.filter(lambda x: x[6] != "NULL")
+    # Create tuple of ownerId and 0    
+    ownerIds = ownerIds.map(lambda x: (x[6], 0))
+
+    # Count by ownerId and sort the list by amount
+    filteredPostsPerUser = sorted(ownerIds.countByKey().items(), key=lambda x: x[1])
+
+    # Return the last value as that is the one with the most posts
+    return filteredPostsPerUser[-1]
+    
+def lessThanThreeBadges(rdd):
+    rdd = rdd.mapPartitionsWithIndex(
+        lambda idx, it: islice(it, 1, None) if idx == 0 else it
+    )
+
+    badges = rdd.map(lambda x: x.split("\t"))
+    
+    userIds = badges.map(lambda x: (x[0], 0))
+
+    badgesPerUser = sorted(userIds.countByKey().items(), key=lambda x: x[1])
+
+    filteredBadgesPerUser = list(filter(lambda x: x[1] < 3, badgesPerUser))
+
+    return len(filteredBadgesPerUser)
+
 # TASK 2
-def task2(posts, comments, users):
+def task2(posts, comments, users, badges):
 
     # 2.1
     # Find the average length of the questions, answers, and comments
@@ -65,21 +99,7 @@ def task2(posts, comments, users):
     print(f"User with most questions: {greatestNumberofQuestionsAndAnswers(posts, '1')[0]} with {greatestNumberofQuestionsAndAnswers(posts, '1')[1]} questions")
     print(f"User with most answers: {greatestNumberofQuestionsAndAnswers(posts, '2')[0]} with {greatestNumberofQuestionsAndAnswers(posts, '2')[1]} answers")
 
-def greatestNumberofQuestionsAndAnswers(rdd, type):
-    
-    # Filter out posts by community
-    posts = rdd.filter(lambda line: line[6] != -1)
-
-    # Only take questions or answers
-    filteredPosts = posts.filter(lambda x: x[1] == type)
-
-    # Filter out posts where the ownerId is null
-    ownerIds = filteredPosts.filter(lambda x: x[6] != "NULL")
-    # Create tuple of ownerId and 0    
-    ownerIds = ownerIds.map(lambda x: (x[6], 0))
-
-    # Count by ownerId and sort the list by amount
-    filteredPostsPerUser = sorted(ownerIds.countByKey().items(), key=lambda x: x[1])
-
-    # Return the last value as that is the one with the most posts
-    return filteredPostsPerUser[-1]
+    # 2.4
+    # Calculate the number of users who received less than three badges
+    print("Task 2.4")
+    print(f"Amount of users with less than 3 badges: {lessThanThreeBadges(badges)}")
