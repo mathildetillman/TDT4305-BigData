@@ -36,16 +36,20 @@ def greatestNumberofQuestionsAndAnswers(rdd, type):
     return filteredPostsPerUser[-1]
     
 def lessThanThreeBadges(rdd):
+
     rdd = rdd.mapPartitionsWithIndex(
         lambda idx, it: islice(it, 1, None) if idx == 0 else it
     )
 
     badges = rdd.map(lambda x: x.split("\t"))
-    
+
+    # Create tuples of UserId and 0    
     userIds = badges.map(lambda x: (x[0], 0))
 
+    # Create tuples with UserId and amount of badges
     badgesPerUser = sorted(userIds.countByKey().items(), key=lambda x: x[1])
 
+    # Filter the tuples on badge amount
     filteredBadgesPerUser = list(filter(lambda x: x[1] < 3, badgesPerUser))
 
     return len(filteredBadgesPerUser)
