@@ -23,11 +23,15 @@ def task3(posts, comments, users, badges, sqlContext, sc):
     # Task 3.1
 
     v = createNodes(posts, users, sqlContext)
-    e = createEdges(posts, comments, sqlContext, sc)
+    e = createEdges(posts, comments, sqlContext, sc, 1)
     gf = graphframes.GraphFrame(v, e)
 
     print("Task 3.1")
     gf.edges.show()
+
+    print("Task 3.2")
+    df = convertEdgesToDF(createEdges(posts, comments, sqlContext, sc, 0))
+    df.show()
 
 
 
@@ -53,7 +57,7 @@ def createNodes(posts, users, sqlContext):
 
     return sqlContext.createDataFrame(combo, ["id", "displayname"])
 
-def createEdges(posts, comments, sqlContext, sc):
+def createEdges(posts, comments, sqlContext, sc, type):
 
 
     # (postId commented on by userID)
@@ -68,8 +72,10 @@ def createEdges(posts, comments, sqlContext, sc):
     # Extract only (commenterId and postOwnerId)
     combo = combo.map(lambda x: (x[1]) )
     withWeights = addWeight(combo, sc)
-    return sqlContext.createDataFrame(withWeights, ["src", "dst", "weight"])
-
+    if (type == 1):
+        return sqlContext.createDataFrame(withWeights, ["src", "dst", "weight"])
+    else:
+        return withWeights
 def addWeight(combo, sc):
     # Create nested tuple with 1 as the second item to allow for reduceByKey to work with addition
     combo = combo.map(lambda x: (x, 1))
@@ -83,3 +89,7 @@ def addWeight(combo, sc):
     # Spread the nested tuple to create a triple that is (commenterId, postOwnerId, weight)
     combo = rdd.map(lambda x: (*x[0], x[1]))
     return combo
+
+def convertEdgesToDF(rdd):
+    columns = ["CommenterId", "PostOwnerId", "Weight"]
+    return rdd.toDF(columns)
