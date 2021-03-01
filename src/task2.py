@@ -1,5 +1,6 @@
 import base64
 from itertools import islice
+import math
 
 def getAverageLength(rdd, col):
     # Remove header
@@ -54,6 +55,35 @@ def lessThanThreeBadges(rdd):
 
     return len(filteredBadgesPerUser)
 
+
+
+
+
+def pearsonsR(rdd):
+
+    # Remove header
+    rdd = rdd.mapPartitionsWithIndex(
+        lambda idx, it: islice(it, 1, None) if idx == 0 else it
+    )
+
+    # Make rdd for upvotes and find average
+    users_upvotes = rdd.map(lambda x: int(x[7]))
+    average_upvotes = users_upvotes.sum()/users_upvotes.count()
+
+    # Make rdd for downvotesand find average
+    users_downvotes = rdd.map(lambda x: int(x[8]))
+    average_downvotes = users_downvotes.sum() / users_downvotes.count()
+
+    # Find Pearson numerator
+    numerator = rdd.map(lambda x: (int(x[7]) - average_upvotes) * (int(x[8]) - average_downvotes)).sum()
+
+    # Find Pearson denominator
+    denominator = (math.sqrt(rdd.map(lambda x: (int(x[7]) - average_upvotes) ** 2  ).sum())) * (math.sqrt(rdd.map(lambda x: (int(x[8]) - average_downvotes) ** 2).sum()))
+
+    # Return Pearsons r
+    return numerator/denominator
+
+
 # TASK 2
 def task2(posts, comments, users, badges):
 
@@ -62,7 +92,6 @@ def task2(posts, comments, users, badges):
 
     # Split on \t
     posts = posts.map(lambda line: line.split("\t"))
-    
     comments = comments.map(lambda line: line.split("\t"))
     users = users.map(lambda line: line.split("\t"))
 
@@ -72,9 +101,9 @@ def task2(posts, comments, users, badges):
 
     # Find average length
     print("Task 2.1")
-    print(f"Average length of comments: {getAverageLength(comments, 2)}")
-    print(f"Average length of questions: {getAverageLength(questions, 5)}")
-    print(f"Average length of answers: {getAverageLength(answers, 5)}")
+    #print(f"Average length of comments: {getAverageLength(comments, 2)}")
+    #print(f"Average length of questions: {getAverageLength(questions, 5)}")
+    #print(f"Average length of answers: {getAverageLength(answers, 5)}")
 
     # 2.2
     # Find the dates when the first and the last questions were asked and who posted them
@@ -94,16 +123,21 @@ def task2(posts, comments, users, badges):
     userLast = userNames.filter(lambda user: user[0] == lastQuestion[1])
 
     print("Task 2.2")
-    print(f"The first question was asked by {userFirst.first()[1]} on {firstQuestion[0]}")
-    print(f"The last question was asked by {userLast.first()[1]} on {lastQuestion[0]}")
+    #print(f"The first question was asked by {userFirst.first()[1]} on {firstQuestion[0]}")
+    #print(f"The last question was asked by {userLast.first()[1]} on {lastQuestion[0]}")
 
     # 2.3
     # Find the users who wrote the greatest number of answers and questions
     print("Task 2.3") 
-    print(f"User with most questions: {greatestNumberofQuestionsAndAnswers(posts, '1')[0]} with {greatestNumberofQuestionsAndAnswers(posts, '1')[1]} questions")
-    print(f"User with most answers: {greatestNumberofQuestionsAndAnswers(posts, '2')[0]} with {greatestNumberofQuestionsAndAnswers(posts, '2')[1]} answers")
+    #print(f"User with most questions: {greatestNumberofQuestionsAndAnswers(posts, '1')[0]} with {greatestNumberofQuestionsAndAnswers(posts, '1')[1]} questions")
+    #print(f"User with most answers: {greatestNumberofQuestionsAndAnswers(posts, '2')[0]} with {greatestNumberofQuestionsAndAnswers(posts, '2')[1]} answers")
 
     # 2.4
     # Calculate the number of users who received less than three badges
     print("Task 2.4")
-    print(f"Amount of users with less than 3 badges: {lessThanThreeBadges(badges)}")
+    #print(f"Amount of users with less than 3 badges: {lessThanThreeBadges(badges)}")
+
+    # 2.5
+    # Calculate Pearson's correlation coefficient between number of upvotes and downvotes cast by a user
+    print("Task 2.5")
+    print(f"Pearson's correlation coefficient between number of upvotes and downvotes cast by a user: {pearsonsR(users)}")
