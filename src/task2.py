@@ -27,6 +27,7 @@ def greatestNumberofQuestionsAndAnswers(rdd, type):
 
     # Filter out posts where the ownerId is null
     ownerIds = filteredPosts.filter(lambda x: x[6] != "NULL")
+
     # Create tuple of ownerId and 0    
     ownerIds = ownerIds.map(lambda x: (x[6], 0))
 
@@ -55,10 +56,6 @@ def lessThanThreeBadges(rdd):
 
     return len(filteredBadgesPerUser)
 
-
-
-
-
 def pearsonsR(rdd):
 
     # Remove header
@@ -82,6 +79,25 @@ def pearsonsR(rdd):
 
     # Return Pearsons r
     return numerator/denominator
+
+
+
+def entropy(rdd):
+
+    # Remove header
+    rdd = rdd.mapPartitionsWithIndex(
+        lambda idx, it: islice(it, 1, None) if idx == 0 else it
+    )
+
+    # Find num of rows
+    num_rows = rdd.count()
+
+    # Make tuple of (id, commentcount/numRows)
+    px = rdd.map(lambda x: (x[4], 1)).reduceByKey(lambda a, b: a + b).map(lambda x: (x[0], x[1]/num_rows))
+
+    # Return entropy
+    return -(px.map(lambda x: x[1] * math.log2(x[1])).sum())
+
 
 
 # TASK 2
@@ -140,4 +156,9 @@ def task2(posts, comments, users, badges):
     # 2.5
     # Calculate Pearson's correlation coefficient between number of upvotes and downvotes cast by a user
     print("Task 2.5")
-    print(f"Pearson's correlation coefficient between number of upvotes and downvotes cast by a user: {pearsonsR(users)}")
+    #print(f"Pearson's correlation coefficient between number of upvotes and downvotes cast by a user: {pearsonsR(users)}")
+
+    # 2.6
+    # Calculate the entropy of id of users who wrote one or more comment
+    print("Task 2.6")
+    print(f"Entropy of id of users who wrote one or more comment : {entropy(comments)}")
