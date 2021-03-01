@@ -25,44 +25,20 @@ def task3(posts, comments, users, badges, sqlContext, sc):
     )
 
     # Task 3.1
-
-    v = createNodes(posts, users, sqlContext)
-    e = createEdges(posts, comments, sqlContext, sc, 1)
-    gf = graphframes.GraphFrame(v, e)
-
     print("Task 3.1")
-    gf.edges.show()
+    print(f"Graph with weights: {createEdges(posts, comments, sqlContext, sc, 0).take(3)}")
 
+    # Task 3.2
     print("Task 3.2")
     df = convertEdgesToDF(createEdges(posts, comments, sqlContext, sc, 0))
     df.show()
 
+    # Task 3.3
     print("Task 3.3")
     print(f"Top ten users who wrote the most comments: {getMostComments(comments, sqlContext)}")
 
 
 
-def createNodes(posts, users, sqlContext):
-    
-    # Filter out community posts
-    users = users.filter(lambda x: x[0] != -1)
-    
-    # Only get Ids and display names
-    users = users.map(lambda x: (x[0], x[3]))
-
-    # Get ownerId of posts 
-    posts = posts.map(lambda x: (x[6], 0))
-    
-    # Join on Ids to get only users who have posts
-    combo = users.join(posts)
-    
-    # Extract only name and id
-    combo = combo.map(lambda x: (x[0], x[1][0]))
-    
-    # Remove duplicates
-    combo = combo.distinct()
-
-    return sqlContext.createDataFrame(combo, ["id", "displayname"])
 
 def createEdges(posts, comments, sqlContext, sc, type):
 
@@ -84,6 +60,7 @@ def createEdges(posts, comments, sqlContext, sc, type):
         return sqlContext.createDataFrame(withWeights, ["src", "dst", "weight"])
     else:
         return withWeights
+
 def addWeight(combo, sc):
     # Create nested tuple with 1 as the second item to allow for reduceByKey to work with addition
     combo = combo.map(lambda x: (x, 1))
