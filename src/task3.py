@@ -112,7 +112,5 @@ def getMostComments(comments, sqlContext):
     ])
     comments = sqlContext.read.option("delimiter", "\t").csv( INPUT_DATA_PATH + "/comments.csv.gz", schema=schema, header=True)
     unique = comments.groupBy("UserId").count().sort("count", ascending=False)
-    #uList = sorted(list(unique))
-    #print(uList[0])
-    print(unique.take(10))
-    print("lmao")
+    result = unique.take(10)
+    return result
