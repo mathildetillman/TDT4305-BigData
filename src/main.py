@@ -15,7 +15,7 @@ def main():
     task2(posts, comments, users, badges)
 
     # Task 3
-    task3(posts, comments, users, badges, sqlContext, sc)
+    task3(posts, comments, users, sqlContext, sc)
 
 
 if __name__ == "__main__":

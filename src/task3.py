@@ -1,18 +1,16 @@
 from itertools import islice
-import graphframes
 from operator import add
-from pyspark.sql.types import (IntegerType, ShortType, StringType, StructType, StructField, TimestampType)
+from pyspark.sql.types import (IntegerType, StringType, StructType, StructField, TimestampType)
 import sys
 
 INPUT_DATA_PATH = sys.argv[1]
 
-def task3(posts, comments, users, badges, sqlContext, sc):
+def task3(posts, comments, users, sqlContext, sc):
     posts = posts.map(lambda x: x.split("\t"))
     
     posts = posts.mapPartitionsWithIndex(
         lambda idx, it: islice(it, 1, None) if idx == 0 else it
     )
-
     
     comments = comments.mapPartitionsWithIndex(
         lambda idx, it: islice(it, 1, None) if idx == 0 else it
