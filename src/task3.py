@@ -1,6 +1,6 @@
 from itertools import islice
 from operator import add
-from pyspark.sql.types import (IntegerType, StringType, StructType, StructField, TimestampType)
+from pyspark.sql.types import (DataType, IntegerType, StringType, StructType, StructField, TimestampType)
 import sys
 
 INPUT_DATA_PATH = sys.argv[1]
@@ -33,9 +33,19 @@ def task3(posts, comments, users, sqlContext, sc):
 
     # Task 3.3
     print("Task 3.3")
-    print(f"Top ten users who wrote the most comments: {getMostComments(comments, sqlContext)}")
+    print(f"Top ten users who wrote the most comments:")
+    getMostComments(sqlContext)
+
+    # Task 3.4
+    print("Task 3.4")
+    print("UserIds of people who have the most comments on their posts:")
+    getUsersWithMostCommentsOnPosts(sqlContext)
 
 
+    # Task 3.5
+    print("Task 3.5")
+    saveToCSV(posts, comments, sqlContext, sc)
+    print("Saved to edges.csv")
 
 
 def createEdges(posts, comments, sqlContext, sc, type):
@@ -77,7 +87,7 @@ def convertEdgesToDF(rdd):
     columns = ["CommenterId", "PostOwnerId", "Weight"]
     return rdd.toDF(columns)
 
-def getMostComments(comments, sqlContext):
+def getMostComments(sqlContext):
     schema = StructType([
         StructField("PostId", IntegerType()),
         StructField("Score", IntegerType()),
@@ -87,5 +97,46 @@ def getMostComments(comments, sqlContext):
     ])
     comments = sqlContext.read.option("delimiter", "\t").csv( INPUT_DATA_PATH + "/comments.csv.gz", schema=schema, header=True)
     unique = comments.groupBy("UserId").count().sort("count", ascending=False)
-    result = unique.take(10)
-    return result
+    unique.show(10)
+
+
+def getUsersWithMostCommentsOnPosts(sqlContext):
+
+    postsSchema = StructType([
+        StructField("Id", IntegerType()),
+        StructField("PostTypeId", IntegerType()),
+        StructField("CreationDate", TimestampType()),
+        StructField("Score", IntegerType()),
+        StructField("ViewCount", IntegerType()),
+        StructField("Body", StringType()),
+        StructField("OwnerUserId", IntegerType()),
+        StructField("LastActivityDate", TimestampType()),
+        StructField("Title", StringType()),
+        StructField("Tags", StringType()),
+        StructField("AnswerCount", IntegerType()),
+        StructField("CommentCount", IntegerType()),
+        StructField("FavoriteCount", IntegerType()),
+        StructField("ClosedDate", TimestampType()),
+    ])
+    posts = sqlContext.read.option("delimiter", "\t").csv( INPUT_DATA_PATH + "/posts.csv.gz", schema=postsSchema, header=True)
+
+    usersSchema = StructType([
+        StructField("Id", IntegerType()),
+        StructField("Reputation", IntegerType()),
+        StructField("CreationDate", TimestampType()),
+        StructField("DisplayName", StringType()),
+        StructField("LastAccessDate", TimestampType()),
+        StructField("AboutMe", StringType()),
+        StructField("Views", IntegerType()),
+        StructField("UpVotes", IntegerType()),
+        StructField("DownVotes", IntegerType()),
+    ])
+    
+    users = sqlContext.read.option("delimiter", "\t").csv( INPUT_DATA_PATH + "/users.csv.gz", schema=usersSchema, header=True)
+
+    combined = users.join(posts, users["Id"] == posts["OwnerUserId"])
+    combined.select("DisplayName", "CommentCount").groupBy("DisplayName").sum().sort("sum(CommentCount)", ascending=False).show(10)
+
+def saveToCSV(posts, comments, sqlContext, sc):
+    df = createEdges(posts, comments, sqlContext, sc, 1)
+    df.coalesce(1).write.csv(INPUT_DATA_PATH + "edges.csv", header=True, sep="\t")
