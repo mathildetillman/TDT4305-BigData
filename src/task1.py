@@ -14,10 +14,10 @@ def task1(sc):
     # 1.5
     # Print number of rows in each RDD
     print("Task 1")
-    print(f"Number of rows in posts: {posts.count()}")
-    print(f"Number of rows in comments: {comments.count()}")
-    print(f"Number of rows in users: {users.count()}")
-    print(f"Number of rows in badges: {badges.count()}")
+    print(f"Number of rows in posts: {posts.count() - 1}")
+    print(f"Number of rows in comments: {comments.count() - 1}")
+    print(f"Number of rows in users: {users.count() - 1}")
+    print(f"Number of rows in badges: {badges.count() - 1}")
     print("")
 
     return posts,comments, users, badges
