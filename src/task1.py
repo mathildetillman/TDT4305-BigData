@@ -3,7 +3,7 @@ import sys
 INPUT_DATA_PATH = sys.argv[1]
 
 # TASK 1
-def loadDataAndPrintNumRows(sc):
+def task1(sc):
     # 1.1 - 1.4
     # Load the data into RDDs
     posts = sc.textFile(INPUT_DATA_PATH + '/posts.csv.gz')
@@ -18,5 +18,6 @@ def loadDataAndPrintNumRows(sc):
     print(f"Number of rows in comments: {comments.count()}")
     print(f"Number of rows in users: {users.count()}")
     print(f"Number of rows in badges: {badges.count()}")
+    print("")
 
     return posts,comments, users, badges
