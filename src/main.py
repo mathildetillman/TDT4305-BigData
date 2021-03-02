@@ -8,7 +8,7 @@ from task3 import task3
 def main():
     conf = SparkConf().setAppName("TDT4305 Assignment 1").setMaster("local")
     sc = SparkContext(conf=conf)
-
+    sqlContext = SQLContext(sc)
     # Task 1
     posts, comments, users, badges = task1(sc)
 
