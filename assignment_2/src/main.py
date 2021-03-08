@@ -44,19 +44,24 @@ def cleanString(text):
 
 
 def slidingWindow(terms):
+
   window = []
   result = set()
   for term in terms:
+    # Add terms to window
     window.append(term)
+    # If window is full create permutations
     if len(window) == 5:
       edges = createEdges(window)
       for edge in edges:
         result.add(edge)
+      # Remove the first item to create space for the new item
       window.pop(0)
   
   return list(result)
 
 def createEdges(window):
+  # Create all permutations from the window
   edges = [(t1, t2,) for t1 in window for t2 in window if t1 != t2]
   return edges
 
@@ -77,20 +82,18 @@ def main():
 
     post = post.collect()[0]
     post = sc.parallelize(post)
+    # Create tuple so dataframe API is happy
     post = post.map(lambda x: (x,))
-    #print(post.take(3))
     nodes = sqlContext.createDataFrame(post, ["id"])
 
-    #print(edges.show()) 
-    #print(nodes.show())
-
+    # Remove duplicates just in case
     edges = edges.distinct()
     nodes = nodes.distinct()
 
     graph = graphframes.GraphFrame(nodes, edges)
-
+    # Apply parameters defined in task description
     graph = graph.pageRank(resetProbability=0.15, tol=0.0001)
-
+    # Sort on pagerank
     graph.vertices.distinct().sort("pagerank", ascending=False).show(10)
 
 if __name__ == "__main__":
