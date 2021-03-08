@@ -1,6 +1,8 @@
 from pyspark import SparkContext, SparkConf
 import base64
 import sys
+import graphframes
+from pyspark.sql.context import SQLContext
 
 INPUT_DATA_PATH = sys.argv[1]
 POST_ID = sys.argv[2]
@@ -11,7 +13,6 @@ PUNCTUATION = '''!"#$%&'()*+,-/:;<=>?@[]^_`{|}~?'''
 def getPost(sc):
     # Load the posts into an RDD
     posts = sc.textFile(INPUT_DATA_PATH + '/posts.csv.gz')
-
     # Split on "\t"
     posts = posts.map(lambda line: line.split("\t"))
 
@@ -42,15 +43,55 @@ def cleanString(text):
   return tokens
 
 
+def slidingWindow(terms):
+  window = []
+  result = set()
+  for term in terms:
+    window.append(term)
+    if len(window) == 5:
+      edges = createEdges(window)
+      for edge in edges:
+        result.add(edge)
+      window.pop(0)
+  
+  return list(result)
+
+def createEdges(window):
+  edges = [(t1, t2,) for t1 in window for t2 in window if t1 != t2]
+  return edges
+
+
+
 def main():
     conf = SparkConf().setAppName("TDT4305 Assignment 2").setMaster("local")
     sc = SparkContext(conf=conf)
+    sqlContext = SQLContext(sc)
 
     post = getPost(sc)
 
     post = post.map(cleanString)
 
-    print(post.collect()[0])
+
+    edges = sc.parallelize(slidingWindow(post.collect()[0]))
+    edges = sqlContext.createDataFrame(edges, ["src", "dst"])
+
+    post = post.collect()[0]
+    post = sc.parallelize(post)
+    post = post.map(lambda x: (x,))
+    #print(post.take(3))
+    nodes = sqlContext.createDataFrame(post, ["id"])
+
+    #print(edges.show()) 
+    #print(nodes.show())
+
+    edges = edges.distinct()
+    nodes = nodes.distinct()
+
+    graph = graphframes.GraphFrame(nodes, edges)
+
+    graph = graph.pageRank(resetProbability=0.15, tol=0.0001)
+
+    graph.vertices.distinct().sort("pagerank", ascending=False).show(10)
 
 if __name__ == "__main__":
     main()
