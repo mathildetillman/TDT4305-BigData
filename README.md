@@ -7,4 +7,4 @@
 
 ## Run
 
-`spark-submit src/main.py <input_data_path>`
+`spark-submit main.py <input_data_path> <post_id>`
