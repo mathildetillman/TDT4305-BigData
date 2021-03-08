@@ -1,9 +1,9 @@
 from pyspark import SparkContext, SparkConf
 from pyspark.sql.context import SQLContext
 
-from Assignment_1.task1 import task1
-from Assignment_1.task2 import task2
-from Assignment_1.task3 import task3
+from task1 import task1
+from task2 import task2
+from task3 import task3
 
 def main():
     conf = SparkConf().setAppName("TDT4305 Assignment 1").setMaster("local")
