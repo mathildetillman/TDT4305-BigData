@@ -78,27 +78,40 @@ def main():
     # Get post
     post = getPost(sc)
 
+    print("Cleaning posts")
     # Clean post
     post = post.map(cleanString)
 
+    # Run sliding window algorithm
+    print("Running sliding window")
     edges = sc.parallelize(slidingWindow(post.collect()[0]))
+    
+    print("Creating edge dataframe")
     edges = sqlContext.createDataFrame(edges, ["src", "dst"])
 
     post = post.collect()[0]
+    print("Creating node RDD")
     post = sc.parallelize(post)
 
     # Create tuple so dataframe API is happy
     post = post.map(lambda x: (x,))
+    print("Creating node dataframe")
     nodes = sqlContext.createDataFrame(post, ["id"])
 
     # Remove duplicates just in case
+    print("Removing duplicates")
     edges = edges.distinct()
     nodes = nodes.distinct()
 
+    print("Creating graph")
     graph = graphframes.GraphFrame(nodes, edges)
+
     # Apply parameters defined in task description
+    print("Running pagerank")
     graph = graph.pageRank(resetProbability=0.15, tol=0.0001)
+
     # Sort on pagerank
+    print("Showing result")
     graph.vertices.distinct().sort("pagerank", ascending=False).show(10)
 
 
